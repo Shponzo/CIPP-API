@@ -86,7 +86,7 @@ function Get-CIPPTenantAlignment {
                 }
             }
 
-            if (-not $tenantData.ContainsKey($Tenant)) {
+            if ($Tenant -and -not $tenantData.ContainsKey($Tenant)) {
                 $tenantData[$Tenant] = @{}
             }
             $tenantData[$Tenant][$FieldName] = @{
@@ -178,7 +178,7 @@ function Get-CIPPTenantAlignment {
                                 $IntuneActions = if ($IntuneTemplate.action) { $IntuneTemplate.action } else { @() }
                                 $IntuneReportingEnabled = ($IntuneActions | Where-Object { $_.value -and ($_.value.ToLower() -eq 'report' -or $_.value.ToLower() -eq 'remediate') }).Count -gt 0
                                 $TagTemplate = $TagTemplates | Where-Object -Property package -EQ $Tag.value
-                                $TagTemplates | ForEach-Object {
+                                $TagTemplate | ForEach-Object {
                                     $TagStandardId = "standards.IntuneTemplate.$($_.GUID)"
                                     [PSCustomObject]@{
                                         StandardId       = $TagStandardId
@@ -245,7 +245,8 @@ function Get-CIPPTenantAlignment {
                     # Use HashSet for Contains
                     $IsReportingDisabled = $ReportingDisabledSet.Contains($StandardKey)
                     # Use cached tenant data
-                    $HasStandard = $CurrentTenantStandards.ContainsKey($StandardKey)
+
+                    $HasStandard = $StandardKey -and $CurrentTenantStandards.ContainsKey($StandardKey)
 
                     if ($HasStandard) {
                         $StandardObject = $CurrentTenantStandards[$StandardKey]
@@ -258,7 +259,7 @@ function Get-CIPPTenantAlignment {
                             }
                         }
 
-                        $IsCompliant = ($Value -eq $true)
+                        $IsCompliant = ($Value -eq $true) -or ($StandardObject.CurrentValue -and $StandardObject.CurrentValue -eq $StandardObject.ExpectedValue)
                         $IsLicenseMissing = ($Value -is [string] -and $Value -like 'License Missing:*')
 
                         $ComplianceStatus = if ($IsReportingDisabled) {
