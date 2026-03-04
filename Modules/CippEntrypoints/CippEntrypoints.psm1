@@ -188,6 +188,10 @@ function Receive-CippOrchestrationTrigger {
             BackoffCoefficient  = 2
         }
 
+        if ($env:WEBSITE_SKU -match '^Premium') {
+            $OrchestratorInput | Add-Member -MemberType NoteProperty -Name DurableMode -Value 'FanOut' -Force
+        }
+
         switch ($OrchestratorInput.DurableMode) {
             'FanOut' {
                 $DurableMode = 'FanOut'
@@ -258,8 +262,18 @@ function Receive-CippOrchestrationTrigger {
             Write-Information "Running post execution function $($OrchestratorInput.PostExecution.FunctionName)"
             $PostExecParams = @{
                 FunctionName = $OrchestratorInput.PostExecution.FunctionName
-                Parameters   = $OrchestratorInput.PostExecution.Parameters
-                Results      = @($Results)
+            }
+
+            if ($Results) {
+                $ResultsList = [System.Collections.Generic.List[object]]::new()
+                foreach ($Result in $Results) {
+                    $ResultsList.Add($Result)
+                }
+                $PostExecParams['Results'] = $ResultsList
+            }
+
+            if ($OrchestratorInput.PostExecution.Parameters) {
+                $PostExecParams['Parameters'] = $OrchestratorInput.PostExecution.Parameters
             }
             if ($null -ne $PostExecParams.FunctionName) {
                 $null = Invoke-ActivityFunction -FunctionName CIPPActivityFunction -Input $PostExecParams
@@ -271,6 +285,7 @@ function Receive-CippOrchestrationTrigger {
         }
     } catch {
         Write-Information "Orchestrator error $($_.Exception.Message) line $($_.InvocationInfo.ScriptLineNumber)"
+        Write-Information $_.InvocationInfo.PositionMessage
     }
     return $true
 }
@@ -291,7 +306,6 @@ function Receive-CippActivityTrigger {
     Write-Warning "Hey Boo, the activity function is running. Here's some info: $($Item | ConvertTo-Json -Depth 10 -Compress)"
     try {
         $Output = $null
-        Set-Location (Get-Item $PSScriptRoot).Parent.Parent.FullName
         $metric = @{
             Kind         = 'CIPPCommandStart'
             InvocationId = "$($ExecutionContext.InvocationId)"
@@ -361,7 +375,7 @@ function Receive-CippActivityTrigger {
 
             try {
                 Write-Verbose "Activity starting Function: $FunctionName."
-                Invoke-Command -ScriptBlock { & $FunctionName -Item $Item }
+                $Output = Invoke-Command -ScriptBlock { & $FunctionName -Item $Item }
                 $Status = 'Completed'
 
                 Write-Verbose "Activity completed Function: $FunctionName."
