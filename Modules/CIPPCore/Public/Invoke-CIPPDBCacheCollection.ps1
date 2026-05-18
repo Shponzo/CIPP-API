@@ -31,7 +31,7 @@ function Invoke-CIPPDBCacheCollection {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet('Graph', 'ExchangeConfig', 'ExchangeData', 'ConditionalAccess', 'IdentityProtection', 'Intune', 'Compliance', 'CopilotUsage')]
+        [ValidateSet('Graph', 'ExchangeConfig', 'ExchangeData', 'ConditionalAccess', 'IdentityProtection', 'Intune', 'Compliance', 'CopilotUsage', 'SharePoint', 'Teams')]
         [string]$CollectionType,
 
         [Parameter(Mandatory = $true)]
@@ -87,12 +87,14 @@ function Invoke-CIPPDBCacheCollection {
             'ExoAdminAuditLogConfig'
             'ExoPresetSecurityPolicy'
             'ExoTenantAllowBlockList'
+            'OwaMailboxPolicy'
+            'ReportSubmissionPolicy'
         )
         ExchangeData       = @(
             'CASMailboxes'
             'MailboxUsage'
-            'OneDriveUsage'
             'OfficeActivations'
+            'HVEAccounts'
         )
         ConditionalAccess  = @(
             'ConditionalAccessPolicies'
@@ -111,8 +113,13 @@ function Invoke-CIPPDBCacheCollection {
         Intune             = @(
             'ManagedDevices'
             'IntunePolicies'
+            'IntuneApplications'
+            'IntuneAssignmentFilters'
+            'IntuneCompliancePolicies'
             'ManagedDeviceEncryptionStates'
             'IntuneAppProtectionPolicies'
+            'IntuneScripts'
+            'IntuneReusableSettings'
             'DetectedApps'
             'MDEOnboarding'
         )
@@ -125,6 +132,23 @@ function Invoke-CIPPDBCacheCollection {
             'CopilotUserCountSummary'
             'CopilotUserCountTrend'
             'CopilotReadinessActivity'
+        )
+        SharePoint         = @(
+            'SPOTenant'
+            'SPOTenantSyncClientRestriction'
+            'SharePointSiteUsage'
+            'OneDriveUsage'
+        )
+        Teams              = @(
+            'CsTeamsMeetingPolicy'
+            'CsTeamsClientConfiguration'
+            'CsExternalAccessPolicy'
+            'CsTenantFederationConfiguration'
+            'CsTeamsMessagingPolicy'
+            'CsTeamsAppPermissionPolicy'
+            'Teams'
+            'TeamsActivity'
+            'TeamsVoice'
         )
     }
 
